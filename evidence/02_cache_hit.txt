@@ -1,0 +1,9 @@
+HTTP/1.1 200 OK
+Date: Thu, 04 Jun 2026 02:57:53 GMT
+Content-Type: application/json
+Content-Length: 400
+Connection: keep-alive
+X-Cache: HIT
+Apigw-Requestid: ealzwj1uoAMEYMw=
+
+{"id":"fa8a8b5ccc3a920ad4803047aa9b9a6886a226c305fbfedd0e2e8b47f7fdcb58","processedAt":"2026-06-04T02:57:52.445Z","algorithm":"sha256","result":"33d2b35023eef0a71bafcd30d59923574644448fd6262a092ae66ba3f87a73f9","cacheKey":"process:fa8a8b5ccc3a920ad4803047aa9b9a6886a226c305fbfedd0e2e8b47f7fdcb58","objectKey":"results/2026-06-04/fa8a8b5ccc3a920ad4803047aa9b9a6886a226c305fbfedd0e2e8b47f7fdcb58.json"}

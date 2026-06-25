@@ -1,0 +1,13 @@
+# ==============================================================================
+# namespace.yaml — Espacio de nombres aislado para la app
+# Modo dummies: un namespace es como un cuarto separado dentro del cluster
+# Todos los recursos de esta app van en este cuarto para no mezclarse con otros
+# ==============================================================================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: sre-process-service
+  labels:
+    app: sre-process-service
+    environment: dev
+    managed-by: terraform

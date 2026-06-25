@@ -1,0 +1,55 @@
+# ==============================================================================
+# hpa.yaml — Horizontal Pod Autoscaler
+# Modo dummies: escala automáticamente el número de pods según la carga.
+# Es el equivalente en Kubernetes del Auto Scaling Group que tenemos en EC2.
+# Si llega mucho tráfico → agrega pods. Si baja → los reduce.
+# ==============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: sre-process-service-hpa
+  namespace: sre-process-service
+  labels:
+    app: sre-process-service
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sre-process-service
+
+  minReplicas: 2    # Mínimo siempre 2 para alta disponibilidad
+  maxReplicas: 10   # Máximo 10 pods bajo carga extrema
+
+  metrics:
+    # Escala cuando CPU supera el 60%
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 60
+
+    # Escala cuando memoria supera el 70%
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+  behavior:
+    # Comportamiento al escalar hacia arriba — agresivo para responder rápido
+    scaleUp:
+      stabilizationWindowSeconds: 60    # Espera 60s antes de escalar de nuevo
+      policies:
+        - type: Pods
+          value: 2                      # Agrega máximo 2 pods por vez
+          periodSeconds: 60
+
+    # Comportamiento al escalar hacia abajo — conservador para no interrumpir
+    scaleDown:
+      stabilizationWindowSeconds: 300   # Espera 5 minutos antes de reducir
+      policies:
+        - type: Pods
+          value: 1                      # Reduce de a 1 pod por vez
+          periodSeconds: 120

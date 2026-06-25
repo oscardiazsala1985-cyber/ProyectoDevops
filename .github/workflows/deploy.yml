@@ -1,0 +1,209 @@
+# ==============================================================================
+# deploy.yml — Pipeline de Entrega Continua (CD)
+# Se ejecuta solo cuando se hace merge a main (producción) o develop (staging)
+# Modo dummies: después de que el CI valida el código, este pipeline lo
+# despliega automáticamente en el ambiente correcto
+# Punto 11 del reto: CI/CD con múltiples entornos
+# ==============================================================================
+
+name: 🚀 CD — Despliegue Multi-Entorno
+
+on:
+  push:
+    branches:
+      - main       # → Despliega en PRODUCCIÓN
+      - develop    # → Despliega en DEV/STAGING
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPOSITORY: sre-process-service
+
+jobs:
+  # ── Determinar entorno según rama ──────────────────────────────────────────
+  set-environment:
+    name: 🎯 Determinar Entorno
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.set-env.outputs.environment }}
+      tf_workspace: ${{ steps.set-env.outputs.tf_workspace }}
+    steps:
+      - name: Determinar entorno
+        id: set-env
+        run: |
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "environment=prod" >> $GITHUB_OUTPUT
+            echo "tf_workspace=prod" >> $GITHUB_OUTPUT
+          else
+            echo "environment=dev" >> $GITHUB_OUTPUT
+            echo "tf_workspace=dev" >> $GITHUB_OUTPUT
+          fi
+
+  # ── Build y Push imagen Docker a ECR ──────────────────────────────────────
+  build-and-push:
+    name: 🐳 Build & Push Docker → ECR
+    runs-on: ubuntu-latest
+    needs: set-environment
+    outputs:
+      image-tag: ${{ steps.build.outputs.image-tag }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login en Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build y Push imagen
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:${{ github.sha }}
+            ${{ steps.login-ecr.outputs.registry }}/${{ env.ECR_REPOSITORY }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Guardar tag de imagen
+        id: set-tag
+        run: echo "image-tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+
+  # ── Despliegue en DEV (automático) ─────────────────────────────────────────
+  deploy-dev:
+    name: 🌱 Deploy → DEV (automático)
+    runs-on: ubuntu-latest
+    needs: [set-environment, build-and-push]
+    if: github.ref_name == 'develop'
+    environment:
+      name: dev
+      url: ${{ steps.get-url.outputs.url }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.6"
+
+      - name: Terraform Apply — DEV
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD_DEV }}
+          TF_VAR_environment: dev
+        run: |
+          terraform init
+          terraform workspace select dev || terraform workspace new dev
+          terraform apply -auto-approve -var="environment=dev"
+
+      - name: Obtener URL del endpoint
+        id: get-url
+        run: |
+          URL=$(terraform output -raw api_process_url)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Smoke Test DEV
+        run: |
+          sleep 30  # Esperar a que Lambda se actualice
+          URL=$(terraform output -raw api_process_url)
+          echo "🧪 Smoke test en: $URL"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -d '{"test": "smoke-test-ci", "version": "${{ github.sha }}"}')
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Smoke test PASSED — HTTP $RESPONSE"
+          else
+            echo "❌ Smoke test FAILED — HTTP $RESPONSE"
+            exit 1
+          fi
+
+      - name: Notificar despliegue exitoso DEV
+        if: success()
+        run: |
+          echo "✅ Despliegue en DEV exitoso"
+          echo "Commit: ${{ github.sha }}"
+          echo "URL: ${{ steps.get-url.outputs.url }}"
+
+  # ── Despliegue en PRODUCCIÓN (con aprobación manual) ───────────────────────
+  deploy-prod:
+    name: 🏭 Deploy → PROD (aprobación requerida)
+    runs-on: ubuntu-latest
+    needs: [set-environment, build-and-push]
+    if: github.ref_name == 'main'
+    environment:
+      name: prod              # Requiere aprobación configurada en GitHub Settings
+      url: ${{ steps.get-url.outputs.url }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar credenciales AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN_PROD }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~1.6"
+
+      - name: Terraform Plan PROD (solo plan, sin apply)
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD_PROD }}
+          TF_VAR_environment: prod
+        run: |
+          terraform init
+          terraform workspace select prod || terraform workspace new prod
+          terraform plan -var="environment=prod" -out=tfplan-prod
+
+      - name: Terraform Apply PROD
+        env:
+          TF_VAR_db_password: ${{ secrets.DB_PASSWORD_PROD }}
+          TF_VAR_environment: prod
+        run: terraform apply tfplan-prod
+
+      - name: Obtener URL del endpoint
+        id: get-url
+        run: |
+          URL=$(terraform output -raw api_process_url)
+          echo "url=$URL" >> $GITHUB_OUTPUT
+
+      - name: Smoke Test PRODUCCIÓN
+        run: |
+          sleep 30
+          URL=$(terraform output -raw api_process_url)
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X POST "$URL" \
+            -H "Content-Type: application/json" \
+            -d '{"test": "prod-smoke-test"}')
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo "✅ Producción OK — HTTP $RESPONSE"
+          else
+            echo "❌ PRODUCCIÓN FALLÓ — HTTP $RESPONSE — iniciando rollback"
+            exit 1
+          fi
+
+      - name: Notificar despliegue PROD exitoso
+        if: success()
+        run: |
+          echo "🚀 PRODUCCIÓN ACTUALIZADA"
+          echo "Versión: ${{ github.sha }}"
+          echo "URL: ${{ steps.get-url.outputs.url }}"

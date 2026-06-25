@@ -1,0 +1,18 @@
+# ==============================================================================
+# configmap.yaml — Variables de configuración no sensibles
+# Modo dummies: es como un archivo .env para los pods de Kubernetes
+# Las contraseñas NO van aquí — esas van en Secrets
+# ==============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sre-app-config
+  namespace: sre-process-service
+  labels:
+    app: sre-process-service
+data:
+  PORT: "8080"
+  NODE_ENV: "production"
+  REDIS_PORT: "6379"
+  REDIS_TTL_SECONDS: "60"
+  APP_VERSION: "1.0.0"

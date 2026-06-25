@@ -1,0 +1,86 @@
+# ==============================================================================
+# pvc.yaml — PersistentVolumeClaim para almacenamiento persistente
+# Punto 3 del reto: gestión de almacenamiento en contenedores
+# Modo dummies: un PVC es como pedirle a Kubernetes "necesito 20GB de disco"
+# Kubernetes lo provisiona automáticamente usando AWS EBS (gp3)
+# ==============================================================================
+
+# PVC para Redis — datos del caché sobreviven si el pod se reinicia
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-pvc
+  namespace: sre-process-service
+  labels:
+    app: redis
+spec:
+  accessModes:
+    - ReadWriteOnce       # Solo puede montarse en un pod a la vez (EBS)
+  storageClassName: gp3   # AWS EBS gp3 — aprovisionado automáticamente por EKS
+  resources:
+    requests:
+      storage: 5Gi        # 5GB para datos de Redis
+
+---
+# PVC para logs de la aplicación — compartido entre todos los pods
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: app-logs-pvc
+  namespace: sre-process-service
+  labels:
+    app: sre-process-service
+spec:
+  accessModes:
+    - ReadWriteMany       # Puede montarse en múltiples pods simultáneamente
+  storageClassName: efs   # AWS EFS — para acceso compartido entre pods
+  resources:
+    requests:
+      storage: 10Gi       # 10GB para logs compartidos
+
+---
+# Redis Deployment con almacenamiento persistente
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: sre-process-service
+  labels:
+    app: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+          command:
+            - redis-server
+            - "--maxmemory"
+            - "128mb"
+            - "--maxmemory-policy"
+            - "allkeys-lru"
+            - "--appendonly"
+            - "yes"           # Persistencia en disco habilitada
+          volumeMounts:
+            - name: redis-storage
+              mountPath: /data  # Redis guarda los datos aquí
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "50m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+      volumes:
+        - name: redis-storage
+          persistentVolumeClaim:
+            claimName: redis-pvc  # Referencia al PVC creado arriba

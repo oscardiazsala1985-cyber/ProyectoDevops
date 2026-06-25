@@ -1,0 +1,16 @@
+# Archivos que NO se incluyen en la imagen Docker
+.git
+.terraform
+*.tfstate
+*.tfstate.backup
+*.tfvars
+node_modules
+.github
+k8s
+scripts
+evidence
+README.md
+docker-compose.yml
+.dockerignore
+**/*.test.js
+**/__tests__

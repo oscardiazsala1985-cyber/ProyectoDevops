@@ -1,0 +1,46 @@
+# ==============================================================================
+# service.yaml — Expone los pods como un endpoint estable
+# Modo dummies: los pods tienen IPs que cambian cada vez que se recrean.
+# El Service es como un número de teléfono fijo que siempre llega al pod correcto
+# ==============================================================================
+
+# Service para la aplicación — expuesto via ALB en AWS
+apiVersion: v1
+kind: Service
+metadata:
+  name: sre-process-service
+  namespace: sre-process-service
+  labels:
+    app: sre-process-service
+  annotations:
+    # En AWS EKS, esto le dice al Service que use el ALB de AWS
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-internal: "false"
+spec:
+  selector:
+    app: sre-process-service
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+      protocol: TCP
+  type: LoadBalancer
+
+---
+# Service para Redis — solo accesible internamente en el cluster
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-service
+  namespace: sre-process-service
+  labels:
+    app: redis
+spec:
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+  type: ClusterIP     # Solo accesible desde dentro del cluster

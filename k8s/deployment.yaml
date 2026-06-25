@@ -1,0 +1,106 @@
+# ==============================================================================
+# deployment.yaml — Define cómo corren los pods de la aplicación
+# Modo dummies: le dice a Kubernetes "quiero 2 copias de la app corriendo
+# siempre, y si una se cae, levanta otra automáticamente"
+# ==============================================================================
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sre-process-service
+  namespace: sre-process-service
+  labels:
+    app: sre-process-service
+    version: "1.0.0"
+  annotations:
+    # Estrategia de despliegue documentada para el equipo
+    deployment.kubernetes.io/revision: "1"
+spec:
+  replicas: 2                     # 2 instancias para alta disponibilidad
+  selector:
+    matchLabels:
+      app: sre-process-service
+
+  # Estrategia Rolling Update — sin downtime al actualizar
+  # Modo dummies: actualiza de a un pod a la vez, siempre hay al menos 1 disponible
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1           # Puede tener 1 pod extra durante el update
+      maxUnavailable: 0     # Nunca baja de 2 pods disponibles
+
+  template:
+    metadata:
+      labels:
+        app: sre-process-service
+        version: "1.0.0"
+    spec:
+      # Distribuir pods en diferentes nodos para HA
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values: [sre-process-service]
+                topologyKey: kubernetes.io/hostname
+
+      containers:
+        - name: sre-process-service
+          image: <AWS_ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/sre-process-service:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+              name: http
+
+          # Variables de entorno desde ConfigMap (no sensibles)
+          envFrom:
+            - configMapRef:
+                name: sre-app-config
+
+          # Variables sensibles desde Secret
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sre-app-secrets
+                  key: DB_PASSWORD
+            # REDIS_HOST se inyecta desde el Service de Redis
+            - name: REDIS_HOST
+              value: "redis-service.sre-process-service.svc.cluster.local"
+
+          # Límites de recursos — previene que un pod consuma todo el nodo
+          resources:
+            requests:
+              memory: "128Mi"   # Mínimo garantizado
+              cpu: "100m"       # 0.1 CPU garantizado
+            limits:
+              memory: "256Mi"   # Máximo permitido
+              cpu: "500m"       # 0.5 CPU máximo
+
+          # Health checks — Kubernetes sabe si el pod está vivo y listo
+          livenessProbe:        # ¿Está vivo? — si falla, reinicia el pod
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            failureThreshold: 3
+
+          readinessProbe:       # ¿Está listo para recibir tráfico?
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            failureThreshold: 3
+
+          # Apagado graceful — termina conexiones activas antes de morir
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+
+      terminationGracePeriodSeconds: 30
