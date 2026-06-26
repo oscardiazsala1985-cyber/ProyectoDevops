@@ -1,9 +1,16 @@
 HTTP/1.1 200 OK
-Date: Thu, 04 Jun 2026 02:57:52 GMT
+Date: Wed, 25 Jun 2026 23:11:03 GMT
 Content-Type: application/json
 Content-Length: 400
 Connection: keep-alive
 X-Cache: MISS
-Apigw-Requestid: ealznhLQIAMEYIg=
+Apigw-Requestid: filNHj7oIAMEc3Q=
 
-{"id":"fa8a8b5ccc3a920ad4803047aa9b9a6886a226c305fbfedd0e2e8b47f7fdcb58","processedAt":"2026-06-04T02:57:52.445Z","algorithm":"sha256","result":"33d2b35023eef0a71bafcd30d59923574644448fd6262a092ae66ba3f87a73f9","cacheKey":"process:fa8a8b5ccc3a920ad4803047aa9b9a6886a226c305fbfedd0e2e8b47f7fdcb58","objectKey":"results/2026-06-04/fa8a8b5ccc3a920ad4803047aa9b9a6886a226c305fbfedd0e2e8b47f7fdcb58.json"}
+{"id":"4989066b81088e7fb52d9a47e32418571822e368ac9bd82032087426896ff8d0","processedAt":"2026-06-25T23:11:03.501Z","algorithm":"sha256","result":"fa0a74dbd2cb9550af3bb9c6c86353f056890e0a57e00c84eaa94bc23bab917f","cacheKey":"process:4989066b81088e7fb52d9a47e32418571822e368ac9bd82032087426896ff8d0","objectKey":"results/2026-06-25/4989066b81088e7fb52d9a47e32418571822e368ac9bd82032087426896ff8d0.json"}
+
+---
+EVIDENCIA: Cache MISS — primera petición procesada por Lambda
+Fecha de prueba: 25 de Junio 2026
+Endpoint: https://gahk15kxi5.execute-api.us-east-1.amazonaws.com/process
+Payload: {"data": "cache-demo-2026"}
+Resultado: Lambda procesó el payload, calculó SHA-256, guardó en S3 y cacheó en Redis (TTL 60s)
