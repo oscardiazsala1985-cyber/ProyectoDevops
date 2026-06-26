@@ -12,10 +12,6 @@
 
 > **Decisión de arquitectura:** El estado de Terraform se almacena de forma remota en Amazon S3 con versionado y cifrado AES-256, y se utiliza DynamoDB para implementar state locking — evitando modificaciones concurrentes y asegurando la consistencia del estado en entornos de equipo y pipelines CI/CD.
 
-> **Estado de Terraform almacenado remotamente en Amazon S3** con versionado y cifrado AES-256.
-> **DynamoDB implementa State Locking** — evita modificaciones concurrentes y garantiza
-> consistencia del estado en equipos y pipelines CI/CD.
-
 ---
 
 ## 📋 Tabla de Contenido
