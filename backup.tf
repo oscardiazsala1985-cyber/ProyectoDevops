@@ -1,4 +1,4 @@
-# ==============================================================================
+﻿# ==============================================================================
 # backup.tf
 # AWS Backup — Políticas centralizadas de respaldo y recuperación
 # Cubre punto 8 del reto: Políticas de Respaldo y Recuperación
@@ -24,7 +24,6 @@ variable "backup_cold_storage_days" {
 # ------------------------------------------------------------------------------
 # AWS Backup Vault
 # Un vault es el contenedor seguro donde se guardan los backups
-# Modo dummies: es como una caja fuerte en AWS donde van todas las copias
 # ------------------------------------------------------------------------------
 
 resource "aws_backup_vault" "main" {
@@ -64,7 +63,6 @@ resource "aws_iam_role_policy_attachment" "backup_restore_policy" {
 
 # ------------------------------------------------------------------------------
 # AWS Backup Plan — define CUÁNDO y CON QUÉ FRECUENCIA hacer backups
-# Modo dummies: es como programar una alarma que dice "haz una copia cada día a las 2 AM"
 # ------------------------------------------------------------------------------
 
 resource "aws_backup_plan" "main" {

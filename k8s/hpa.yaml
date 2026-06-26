@@ -1,6 +1,5 @@
-# ==============================================================================
+﻿# ==============================================================================
 # hpa.yaml — Horizontal Pod Autoscaler
-# Modo dummies: escala automáticamente el número de pods según la carga.
 # Es el equivalente en Kubernetes del Auto Scaling Group que tenemos en EC2.
 # Si llega mucho tráfico → agrega pods. Si baja → los reduce.
 # ==============================================================================

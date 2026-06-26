@@ -1,6 +1,5 @@
-# ==============================================================================
+﻿# ==============================================================================
 # deployment.yaml — Define cómo corren los pods de la aplicación
-# Modo dummies: le dice a Kubernetes "quiero 2 copias de la app corriendo
 # siempre, y si una se cae, levanta otra automáticamente"
 # ==============================================================================
 apiVersion: apps/v1
@@ -21,8 +20,7 @@ spec:
       app: sre-process-service
 
   # Estrategia Rolling Update — sin downtime al actualizar
-  # Modo dummies: actualiza de a un pod a la vez, siempre hay al menos 1 disponible
-  strategy:
+    strategy:
     type: RollingUpdate
     rollingUpdate:
       maxSurge: 1           # Puede tener 1 pod extra durante el update

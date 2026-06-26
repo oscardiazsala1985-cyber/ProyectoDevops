@@ -1,6 +1,5 @@
-# ==============================================================================
+﻿# ==============================================================================
 # service.yaml — Expone los pods como un endpoint estable
-# Modo dummies: los pods tienen IPs que cambian cada vez que se recrean.
 # El Service es como un número de teléfono fijo que siempre llega al pod correcto
 # ==============================================================================
 

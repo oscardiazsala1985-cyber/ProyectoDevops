@@ -1,8 +1,7 @@
-/**
+﻿/**
  * index.test.js — Pruebas unitarias e integración del handler Lambda
  * Punto 11 del reto: pruebas automatizadas
- * Modo dummies: estos tests verifican que la app funciona correctamente
- * antes de que llegue al servidor de producción
+  * antes de que llegue al servidor de producción
  */
 
 'use strict';

@@ -1,7 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ==============================================================================
 # health_check.sh — Smoke test y verificación de salud de todos los endpoints
-# Modo dummies: verifica que la app está respondiendo correctamente
 # después de un despliegue. Si algo falla, lo reporta inmediatamente.
 #
 # Uso: bash scripts/health_check.sh <API_URL>

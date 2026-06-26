@@ -1,7 +1,6 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ==============================================================================
 # deploy_local.sh — Despliegue local con Docker Compose
-# Modo dummies: levanta toda la app localmente en tu computador
 # Útil para desarrollo y demostración sin necesitar AWS
 #
 # Uso: bash scripts/deploy_local.sh [start|stop|restart|logs|test]

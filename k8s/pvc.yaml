@@ -1,7 +1,6 @@
-# ==============================================================================
+﻿# ==============================================================================
 # pvc.yaml — PersistentVolumeClaim para almacenamiento persistente
 # Punto 3 del reto: gestión de almacenamiento en contenedores
-# Modo dummies: un PVC es como pedirle a Kubernetes "necesito 20GB de disco"
 # Kubernetes lo provisiona automáticamente usando AWS EBS (gp3)
 # ==============================================================================
 

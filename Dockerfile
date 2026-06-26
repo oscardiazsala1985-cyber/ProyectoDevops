@@ -1,7 +1,6 @@
-# ==============================================================================
+﻿# ==============================================================================
 # Dockerfile — SRE Process Service
 # Imagen multi-stage para producción: build limpio + imagen final mínima
-# Modo dummies: el stage 1 instala todo, el stage 2 solo copia lo necesario
 # Resultado: imagen de ~120MB en vez de ~800MB
 # ==============================================================================
 
@@ -29,7 +28,6 @@ LABEL project="sre-process-service"
 LABEL version="1.0.0"
 
 # Crear usuario no-root por seguridad
-# Modo dummies: la app no corre como administrador para limitar daños si la hackean
 RUN addgroup -g 1001 -S appgroup && \
     adduser -u 1001 -S appuser -G appgroup
 

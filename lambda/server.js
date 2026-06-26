@@ -1,8 +1,7 @@
-/**
+﻿/**
  * server.js — Versión Express de la app para correr en Docker / EC2
  * El mismo handler de Lambda se reutiliza adaptando el request/response
- * Modo dummies: es como poner el mismo motor en dos carros distintos
- */
+  */
 
 'use strict';
 

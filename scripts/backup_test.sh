@@ -1,8 +1,7 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ==============================================================================
 # backup_test.sh — Prueba automatizada de restauración de backups RDS
 # Punto 8 del reto: Políticas de Respaldo y Recuperación
-# Modo dummies: este script verifica que los backups realmente funcionan
 # Si el backup existe pero no se puede restaurar, no sirve de nada tenerlo
 #
 # Uso: bash scripts/backup_test.sh

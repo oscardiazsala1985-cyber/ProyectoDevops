@@ -501,11 +501,6 @@ SSRF que intenten robar credenciales del metadata service de la instancia.
 Grafana está desplegado en una instancia EC2 `t3.small` dentro de las subnets
 privadas, accesible únicamente a través del ALB en la ruta `/grafana`.
 
-Modo dummies: piensa en Grafana como el tablero de un avión. Todos los datos
-de CloudWatch son los sensores — Grafana los convierte en gráficos visuales
-que permiten ver de un vistazo si algo está fallando o si el sistema está
-bajo presión.
-
 **Acceso:** `http://<alb-dns>/grafana` — usuario `admin`
 
 **Datasource configurado automáticamente:** CloudWatch vía IAM Role
@@ -532,10 +527,6 @@ bajo presión.
 CloudTrail es el registro permanente de toda la actividad en la cuenta AWS.
 Cada acción queda registrada: quién la hizo, desde qué IP, a qué hora y qué resultado tuvo.
 
-Modo dummies: es como el libro de registros de un edificio de oficinas.
-Cada vez que alguien entra, sale o toca algo, queda escrito. Si algo sale mal,
-se puede revisar exactamente qué pasó y cuándo.
-
 **¿Qué captura el trail desplegado?**
 
 | Tipo de evento | Ejemplo | Dónde se guarda |
@@ -559,11 +550,7 @@ enable_log_file_validation = true
 
 GuardDuty analiza continuamente CloudTrail, VPC Flow Logs y DNS logs usando
 machine learning para detectar comportamiento anómalo — sin instalar agentes,
-sin configurar reglas manualmente.
-
-Modo dummies: si CloudTrail es la cámara de seguridad, GuardDuty es el guardia
-inteligente que mira las cámaras y te avisa si algo parece sospechoso,
-aunque nunca lo hayas visto antes.
+sin configurar reglas manuales en ningún lado.
 
 **Ejemplos de lo que detecta en esta arquitectura:**
 
@@ -589,12 +576,8 @@ Email / Slack / PagerDuty (configurar suscripción en consola AWS)
 
 ### AWS Backup — Política centralizada de respaldos
 
-AWS Backup gestiona los snapshots de RDS y EC2 desde un único punto de control,
-con dos frecuencias según el tipo de necesidad.
-
-Modo dummies: es como programar dos alarmas de respaldo — una diaria para
-no perder más de 24 horas de trabajo, y una semanal para tener copias
-históricas disponibles durante 3 meses.
+AWS Backup gestiona los snapshots de RDS y EC2 desde un único punto de control
+con dos frecuencias configuradas según el objetivo de recuperación.
 
 | Plan | Horario | Retención | Uso |
 |---|---|---|---|
@@ -609,11 +592,9 @@ una alarma CloudWatch notifica inmediatamente.
 ### AWS X-Ray — Trazabilidad distribuida
 
 La función Lambda tiene `tracing_config { mode = "Active" }` habilitado.
-El 100% de las invocaciones generan una traza que muestra el tiempo exacto
-en cada segmento: Redis GET → S3 PutObject → respuesta al cliente.
-
-Modo dummies: X-Ray es como el GPS de una petición. Puedes ver exactamente
-qué camino tomó, cuánto tardó en cada parada y dónde se atascó.
+El 100% de las invocaciones generan una traza con el tiempo exacto por segmento:
+Redis GET → S3 PutObject → respuesta al cliente. El service map en la consola
+de X-Ray muestra la topología completa y la latencia de cada nodo en tiempo real.
 
 ---
 
@@ -969,13 +950,9 @@ metadata_options {
 
 **5. Auditoría con AWS CloudTrail — IMPLEMENTADO en `cloudtrail.tf`:**
 
-> 🔍 **Modo dummies:** Imagina que CloudTrail es el libro de visitas de tu
-> infraestructura. Cada vez que alguien (o algo) toca un recurso AWS — ya sea
-> Terraform, un usuario, o un servicio — CloudTrail anota quién fue, qué hizo,
-> desde qué IP y a qué hora. Y los logs quedan guardados en S3 para que nadie
-> los pueda borrar sin dejar rastro.
-
 CloudTrail está desplegado con Terraform en `cloudtrail.tf` con estas garantías:
+
+
 
 ```hcl
 # Trail activo multi-región con validación de integridad

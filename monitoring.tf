@@ -1,10 +1,9 @@
-# ==============================================================================
+﻿# ==============================================================================
 # monitoring.tf
 # Grafana en EC2 — Herramienta de monitoreo visual con dashboards
 # Cubre punto 10 del reto: Monitoreo y Optimización de Rendimiento
 #
-# ¿Qué es Grafana? (modo dummies)
-# Imagina que todos los datos de CloudWatch son como números en una hoja de Excel.
+# # Imagina que todos los datos de CloudWatch son como números en una hoja de Excel.
 # Grafana los convierte en gráficos bonitos y dashboards visuales en tiempo real.
 # Puedes ver CPU, memoria, errores, latencia — todo en una sola pantalla web.
 #
@@ -33,7 +32,6 @@ variable "grafana_admin_password" {
 
 # ------------------------------------------------------------------------------
 # Security Group — Grafana EC2
-# Modo dummies: solo permite acceso desde el ALB en el puerto 3000 (Grafana)
 # Egress: necesita salir a Internet para llamar a la API de CloudWatch
 # ------------------------------------------------------------------------------
 
@@ -88,7 +86,6 @@ resource "aws_security_group_rule" "alb_egress_grafana" {
 
 # ------------------------------------------------------------------------------
 # IAM Role para Grafana EC2
-# Modo dummies: le da permisos a la instancia para LEER métricas de CloudWatch
 # Solo lectura — nunca puede modificar ni eliminar métricas
 # ------------------------------------------------------------------------------
 
@@ -172,7 +169,6 @@ resource "aws_cloudwatch_log_group" "grafana" {
 
 # ------------------------------------------------------------------------------
 # EC2 Instance — Servidor Grafana
-# Modo dummies: es una computadora en la nube dedicada a correr Grafana.
 # El user_data es un script que se ejecuta automáticamente al arrancar la instancia
 # e instala y configura Grafana sin intervención manual.
 # ------------------------------------------------------------------------------
@@ -195,8 +191,7 @@ resource "aws_instance" "grafana" {
   monitoring = true
 
   # Script de instalación automática de Grafana
-  # Modo dummies: cuando la EC2 arranca por primera vez, corre este script
-  # que instala Grafana, lo configura con CloudWatch y lo arranca como servicio
+    # que instala Grafana, lo configura con CloudWatch y lo arranca como servicio
   user_data = base64encode(templatefile("${path.module}/templates/grafana_setup.sh.tpl", {
     grafana_admin_password = var.grafana_admin_password
     aws_region             = var.aws_region
@@ -228,7 +223,6 @@ resource "aws_instance" "grafana" {
 
 # ------------------------------------------------------------------------------
 # ALB Target Group para Grafana — puerto 3000
-# Modo dummies: el ALB necesita saber dónde está Grafana para enviarle tráfico
 # El health check verifica que Grafana esté respondiendo correctamente
 # ------------------------------------------------------------------------------
 
@@ -263,7 +257,6 @@ resource "aws_lb_target_group_attachment" "grafana" {
 
 # ------------------------------------------------------------------------------
 # ALB Listener Rule — enruta /grafana/* al Target Group de Grafana
-# Modo dummies: el mismo ALB que sirve la app ahora también sirve Grafana
 # Si la URL contiene /grafana, el ALB envía la petición al servidor Grafana
 # Esto evita tener que crear un ALB adicional (ahorro de costos)
 # ------------------------------------------------------------------------------
@@ -288,7 +281,6 @@ resource "aws_lb_listener_rule" "grafana" {
 
 # ------------------------------------------------------------------------------
 # CloudWatch Dashboard — Panel visual de toda la arquitectura
-# Modo dummies: es un tablero en la consola AWS donde ves todo de un vistazo:
 # CPU de las EC2, errores de Lambda, conexiones a RDS, hits del caché Redis
 # Este dashboard se crea automáticamente con Terraform
 # ------------------------------------------------------------------------------

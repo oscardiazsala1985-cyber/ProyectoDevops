@@ -1,7 +1,6 @@
-# ==============================================================================
+﻿# ==============================================================================
 # ci.yml — Pipeline de Integración Continua (CI)
 # Se ejecuta en CADA pull request y push a cualquier rama
-# Modo dummies: antes de que cualquier código llegue a producción,
 # este pipeline lo revisa automáticamente — como un inspector de calidad
 # Punto 11 del reto: Buenas prácticas de CI/CD
 # ==============================================================================

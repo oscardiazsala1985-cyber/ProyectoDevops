@@ -1,8 +1,7 @@
-#!/bin/bash
+﻿#!/bin/bash
 # ==============================================================================
 # grafana_setup.sh.tpl — Script de instalación automática de Grafana
 # Se ejecuta UNA SOLA VEZ cuando la EC2 arranca por primera vez (user_data)
-# Modo dummies: es como un instalador que corre solo y deja Grafana listo
 # ==============================================================================
 
 set -euo pipefail

@@ -1,7 +1,6 @@
-# ==============================================================================
+﻿# ==============================================================================
 # docker-compose.yml — Entorno local completo
 # Levanta la app + Redis simulando la arquitectura AWS en tu máquina
-# Modo dummies: con un solo comando tienes todo corriendo localmente
 # Uso: docker-compose up --build
 # ==============================================================================
 
@@ -59,8 +58,7 @@ services:
       start_period: 5s
 
   # ── Redis Commander (UI visual para Redis) ──────────────────────────────────
-  # Modo dummies: es un panel web donde puedes ver las keys de Redis en el navegador
-  redis-commander:
+    redis-commander:
     image: rediscommander/redis-commander:latest
     container_name: sre-redis-ui
     ports:

@@ -1,6 +1,5 @@
-# ==============================================================================
+﻿# ==============================================================================
 # configmap.yaml — Variables de configuración no sensibles
-# Modo dummies: es como un archivo .env para los pods de Kubernetes
 # Las contraseñas NO van aquí — esas van en Secrets
 # ==============================================================================
 apiVersion: v1

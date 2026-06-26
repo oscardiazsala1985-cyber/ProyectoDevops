@@ -1,7 +1,6 @@
-# ==============================================================================
+﻿# ==============================================================================
 # deploy.yml — Pipeline de Entrega Continua (CD)
 # Se ejecuta solo cuando se hace merge a main (producción) o develop (staging)
-# Modo dummies: después de que el CI valida el código, este pipeline lo
 # despliega automáticamente en el ambiente correcto
 # Punto 11 del reto: CI/CD con múltiples entornos
 # ==============================================================================
