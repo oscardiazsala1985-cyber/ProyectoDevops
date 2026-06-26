@@ -1313,6 +1313,26 @@ administrativo. Esto elimina:
 
 El acceso a la instancia queda auditado en CloudTrail automáticamente.
 
+### Remote State — S3 + DynamoDB State Locking
+
+El estado de Terraform se almacena de forma remota en Amazon S3 y se utiliza
+DynamoDB para implementar state locking, evitando modificaciones concurrentes
+y asegurando la consistencia del estado.
+
+**Bucket S3:** `sre-process-service-tfstate-440744252164`
+- Versionado habilitado — recuperación de versiones anteriores del estado
+- Cifrado AES-256 en reposo
+- Solo HTTPS — bucket policy niega HTTP
+
+**Tabla DynamoDB:** `sre-process-service-tf-locks`
+- Antes de cada `terraform apply`, Terraform escribe un lock con: quién, cuándo y qué operación
+- Si otro proceso intenta ejecutar simultáneamente, detecta el lock y falla con error claro
+- Al terminar, el lock se libera automáticamente
+- Si el proceso se interrumpe: `terraform force-unlock <LOCK_ID>`
+
+Esto garantiza que múltiples ingenieros y pipelines de CI/CD puedan trabajar
+sobre la misma infraestructura de forma segura y coordinada.
+
 ---
 
 ## 📞 Contacto

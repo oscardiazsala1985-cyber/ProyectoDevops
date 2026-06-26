@@ -1,33 +1,49 @@
 # ==============================================================================
-# backend.tf
-# Infraestructura para el Remote State de Terraform
+# backend.tf — Remote State con S3 y DynamoDB State Locking
 #
-# ¿Por qué esto existe? (explicación real)
-# Por defecto Terraform guarda el estado en un archivo local terraform.tfstate.
-# Eso funciona para un solo desarrollador, pero en un equipo o en producción
-# tiene tres problemas críticos:
+# DECISIÓN DE ARQUITECTURA
+# ─────────────────────────────────────────────────────────────────────────────
+# El estado de Terraform se almacena de forma remota en Amazon S3 y se utiliza
+# DynamoDB para implementar state locking, evitando modificaciones concurrentes
+# y asegurando la consistencia del estado en entornos de equipo y pipelines CI/CD.
 #
-#   1. CONCURRENCIA: si dos personas corren terraform apply al mismo tiempo,
-#      los dos leen el mismo estado, hacen cambios distintos y uno sobreescribe
-#      al otro — el estado queda corrupto y la infraestructura inconsistente.
+# ¿Por qué es necesario en producción?
 #
-#   2. PÉRDIDA: si se borra el archivo local o se daña la máquina, Terraform
-#      pierde el registro de qué recursos creó. Ya no puede actualizarlos ni
-#      destruirlos — hay que importar todo manualmente.
+#   Sin remote state, terraform.tfstate vive en el disco local del ingeniero.
+#   Eso genera tres riesgos críticos en entornos reales:
 #
-#   3. COLABORACIÓN: el archivo local no es visible para el equipo ni para
-#      el pipeline de CI/CD — nadie más puede gestionar la infraestructura.
+#   1. CONCURRENCIA — si dos ingenieros o dos runners de CI/CD ejecutan
+#      terraform apply al mismo tiempo, ambos leen el mismo estado desactualizado,
+#      calculan planes distintos y el segundo apply sobreescribe al primero.
+#      El resultado es infraestructura inconsistente y estado corrupto.
 #
-# La solución es Remote State:
-#   - S3 guarda el archivo de estado de forma durable y centralizada
-#   - DynamoDB implementa State Locking: antes de cualquier operación,
-#     Terraform escribe un registro de bloqueo en DynamoDB. Si otro proceso
-#     intenta correr al mismo tiempo, ve el lock y espera o falla con error
-#     claro — nunca hay dos applies simultáneos.
+#   2. PÉRDIDA — si el archivo local se elimina o la máquina falla, Terraform
+#      pierde el registro de todos los recursos que administra. La recuperación
+#      requiere importar manualmente cada recurso con terraform import.
 #
-# Analogía: es como Google Docs vs un archivo Word en el escritorio.
-# Google Docs permite que varios editen, tiene historial, y si se rompe
-# el computador el documento sigue ahí. El Word local no tiene nada de eso.
+#   3. COLABORACIÓN — ningún otro miembro del equipo ni el pipeline de CI/CD
+#      puede gestionar la infraestructura sin acceso al archivo local.
+#
+# Solución implementada:
+#
+#   S3 como backend:
+#     - Estado almacenado de forma durable con 11 nueves de disponibilidad
+#     - Versionado habilitado — permite recuperar versiones anteriores del estado
+#     - Cifrado AES-256 en reposo — el tfstate puede contener información sensible
+#     - Solo HTTPS — bucket policy niega conexiones HTTP
+#
+#   DynamoDB para State Locking:
+#     - Antes de cualquier operación que modifique el estado (apply, destroy),
+#       Terraform escribe un item de bloqueo en DynamoDB con: quién bloqueó,
+#       cuándo y qué operación está ejecutando.
+#     - Si otro proceso intenta ejecutar simultáneamente, detecta el lock
+#       y falla con un mensaje claro indicando quién tiene el lock activo.
+#     - Al terminar la operación, Terraform libera el lock automáticamente.
+#     - Si el proceso se interrumpe sin liberar el lock:
+#       terraform force-unlock <LOCK_ID>
+#
+# Resultado: múltiples ingenieros y pipelines de CI/CD pueden trabajar
+# sobre la misma infraestructura de forma segura y coordinada.
 # ==============================================================================
 
 # ------------------------------------------------------------------------------
