@@ -7,6 +7,8 @@
 
 ## Visión
 
+![Evita Bot](evidence/boevita.png)
+
 La arquitectura actual cubre infraestructura, seguridad y observabilidad.
 La siguiente fase incorpora automatización operacional inteligente mediante
 un agente centralizado denominado **@Evita**, integrando los sistemas de
